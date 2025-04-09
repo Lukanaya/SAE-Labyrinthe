@@ -1,45 +1,51 @@
 import tkinter as tk
 import random
 import time
-#Dimensions du plateau/cases
-WIDTH = 11
-HEIGHT = 11
+import math
+
+# Dimensions du plateau/cases
+WIDTH = 21 # Largeur du plateau
+HEIGHT = 21 # Hauteur du plateau
 dim_case = 30
+labyrinthe = [] # Réel plateau (Attention, vérifier qu'il nest pas vide au changement len(labyrinthe) != 0)
 
-labyrinthe = [[0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], 
-              [0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0], 
-              [0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0], 
-              [1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0], 
-              [0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0], 
-              [0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0], 
-              [0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0], 
-              [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1], 
-              [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0], 
-              [0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0], 
-              [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]]
-
-#Création de la fenêtre Tkinter
 affichage = tk.Tk()
-affichage.title("Génération d'un plateau")
+affichage.title("Génération d’un plateau")
 
-#Création du widget Canvas pour afficher le plateau
+# Création du widget Canvas pour afficher le plateau
 canvas = tk.Canvas(affichage, width=WIDTH * dim_case, height=HEIGHT * dim_case)
 canvas.pack()
 
-#Génération de deux cases aléatoires sur le plateau
-def generer_n_cases_aleatoire(n):
-    #Création d'un plateau de taille WIDTH x HEIGHT
+#Fonction pour dessiner le plateau sur le Canvas
+def draw_plateau(plateau):
+    canvas.delete("all")
+    for y in range(HEIGHT):
+        for x in range(WIDTH):
+            if plateau[x][y] == 1:
+                canvas.create_rectangle(x * dim_case, y * dim_case, (x+1) * dim_case, (y+1) * dim_case, fill="black", outline="gray")
+            elif plateau[x][y] == 0:
+                canvas.create_rectangle(x * dim_case, y * dim_case, (x+1) * dim_case, (y+1) * dim_case, fill="white", outline="gray")
+            elif plateau[x][y] == 2:
+                canvas.create_rectangle(x * dim_case, y * dim_case, (x+1) * dim_case, (y+1) * dim_case, fill="blue", outline="gray")
+            elif plateau[x][y] == 3:
+                canvas.create_rectangle(x * dim_case, y * dim_case, (x+1) * dim_case, (y+1) * dim_case, fill="red", outline="gray") 
+
+# Génération de deux cases aléatoires sur le plateau
+def generer_n_case_aleatoire(n):
+    # Créer d’un plateau de taille WIDTH x HEIGHT
     plateau = [[1 for _ in range(WIDTH)] for _ in range(HEIGHT)]
-    
+
     for _ in range(n):
-        x = random.randint(0, WIDTH-1); y = random.randint(0, HEIGHT -1)
+        x = random.randint(0,WIDTH-1) ; y = random.randint(0,HEIGHT-1)
         while plateau[x][y] == 0:
-            x = random.randint(0, WIDTH-1); y = random.randint(0, HEIGHT -1)
+            x = random.randint(0,WIDTH-1) ; y = random.randint(0,HEIGHT-1)
         plateau[x][y] = 0
         draw_plateau(plateau)
-        #permet de faire une pause de 1s entre l'affichage des deux carrés
+        # permet de faire une pause de 1 seconde entre l’affichage des deux carrés
         affichage.update()
         time.sleep(1)
+
+
         
 def direction_aleatoire(direction):
     if len(direction) == 1:
@@ -81,7 +87,7 @@ def direction_possible(posX, posY, plateau):
 
 #Resolution DFS
 def resolDFS(plateau):
-
+    print(plateau)
     posX = 0
     posY = 0
     posFinalX = WIDTH - 1
@@ -91,15 +97,12 @@ def resolDFS(plateau):
     pile.append([posX,posY])
     plateau[posX][posY] = 2
     while not resol:
-        print(posX, posY)
         if direction_possible(posX, posY, plateau) == [] and len(pile) > 0:
-            print("a")
             plateau[posX][posY] = 3
             precedent = pile.pop()
             posX = precedent[0]
             posY = precedent[1]
         else:
-            print("b")
             direction = direction_aleatoire(direction_possible(posX, posY, plateau))
             posX = posX + deplacementX(direction)
             posY = posY + deplacementY(direction)
@@ -109,33 +112,69 @@ def resolDFS(plateau):
             resol = True
         draw_plateau(plateau)
         affichage.update()
-        time.sleep(0.1)
+        #time.sleep(0.1)
+            
+def generer_labyrinthe(type_resol):
+    labyrinthe = [[1 for _ in range(WIDTH)] for _ in range(HEIGHT)]
+    dir = [(1,0),(-1,0),(0,1),(0,-1)] #haut bas droite gauche (direction au hasard donc osef)
+
+    pile=[(0,0)]
+
+    #construction
+    terminer = False
+    while not terminer:
+        random.shuffle(dir)
+        #sommet de la pile
+        cy, cx = pile[-1] 
+
+        #chercher la bonne direction et se déplacer
+        trouve=False
+        for dy, dx in dir:
+            ny = cy + 2*dy
+            nx = cx + 2*dx
+            #si la zone trouvé est dans les limites du labyrinthe et qu'il est possible de passer dessus alors
+            if 0 <= nx < WIDTH and 0 <= ny < HEIGHT and labyrinthe[ny][nx] != 0:
+                labyrinthe[cy + dy][cx+dx] = 0
+                labyrinthe[ny][nx] = 0
+                pile.append((ny,nx))
+                trouve=True
+                break
+
+        #On sort de la boucle
+        #On vérifie si le chemin n'a pas été trouvé
+        if not trouve:
+            pile.pop() 
+
+
+        #On vérifie si il n'y a plus de possibilité
+        if len(pile)==0: terminer=True
+
+        draw_plateau(labyrinthe)
+        # permet de faire une pause de 1 seconde entre l’affichage des deux carrés
+        affichage.update()
+        # time.sleep(0.0000001)
+
+    nb_mur=0
+    for largeur in range(len(labyrinthe)):
+        for hauteur in range(len(labyrinthe)):
+            if labyrinthe[largeur][hauteur]==1:
+                nb_mur+=1
+    nbNotMur=math.floor(0.02*nb_mur)
+    while nbNotMur>0:
+        x=random.randint(0,WIDTH-1)
+        y=random.randint(0,HEIGHT-1)
+        if labyrinthe[x][y]==1:
+            labyrinthe[x][y]=0
+            nbNotMur-=1
+        draw_plateau(labyrinthe)
+        affichage.update()
         
-
-    
-
-
-
-#Fonction pour dessiner le plateau sur le Canvas
-def draw_plateau(plateau):
-    canvas.delete("all")
-    for y in range(HEIGHT):
-        for x in range(WIDTH):
-            if plateau[x][y] == 1:
-                canvas.create_rectangle(x * dim_case, y * dim_case, (x+1) * dim_case, (y+1) * dim_case, fill="black", outline="gray")
-            elif plateau[x][y] == 0:
-                canvas.create_rectangle(x * dim_case, y * dim_case, (x+1) * dim_case, (y+1) * dim_case, fill="white", outline="gray")
-            elif plateau[x][y] == 2:
-                canvas.create_rectangle(x * dim_case, y * dim_case, (x+1) * dim_case, (y+1) * dim_case, fill="blue", outline="gray")
-            elif plateau[x][y] == 3:
-                canvas.create_rectangle(x * dim_case, y * dim_case, (x+1) * dim_case, (y+1) * dim_case, fill="red", outline="gray")    
-                    
-#Bouton pour lancer "generer_n_case_aleatoire"
-n = 2 #nbr de carrés
-start_button = tk.Button(affichage, text = "Générer le plateau")
-start_button.pack()
-start_button = tk.Button(affichage, text = "Resoudre en DFS", command=lambda: resolDFS(labyrinthe))
+    match type_resol:
+        case "DFS":
+            resolDFS(labyrinthe)
+             
+start_button = tk.Button(affichage, text="Générer le plateau et résolution par DFS", command = lambda: generer_labyrinthe("DFS"))
 start_button.pack()
 
-#Lancer la boucle principale de l'application
-affichage.mainloop()
+# Lancer la boucle principale de l’application
+affichage.mainloop() # permet de garder la fenêtre ouverte en attendant lesinteractions de l’utilisateur
