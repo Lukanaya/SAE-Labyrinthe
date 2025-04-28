@@ -29,6 +29,8 @@ def draw_plateau(plateau):
                 canvas.create_rectangle(x * dim_case, y * dim_case, (x+1) * dim_case, (y+1) * dim_case, fill="blue", outline="gray")
             elif plateau[x][y] == 3:
                 canvas.create_rectangle(x * dim_case, y * dim_case, (x+1) * dim_case, (y+1) * dim_case, fill="red", outline="gray") 
+            elif plateau[x][y] == 4:
+                canvas.create_rectangle(x * dim_case, y * dim_case, (x+1) * dim_case, (y+1) * dim_case, fill="yellow", outline="gray") 
 
 # Génération de deux cases aléatoires sur le plateau
 def generer_n_case_aleatoire(n):
@@ -71,7 +73,6 @@ def deplacementY(direction):
         valeur = + 1
     return valeur 
     
-
 def direction_possible(posX, posY, plateau):
     direction_possible = []
     if posX - 1 >= 0 and plateau[posX - 1][posY] == 0:
@@ -88,32 +89,60 @@ def direction_possible(posX, posY, plateau):
 #Resolution DFS
 def resolDFS(plateau):
     print(plateau)
+    #Initialisation de la position de départ
     posX = 0
     posY = 0
+    #Initialisation de la position de final cherchée
     posFinalX = WIDTH - 1
     posFinalY = HEIGHT - 1
     resol = False
+    #Initialisation de la pile
     pile = []
     pile.append([posX,posY])
     plateau[posX][posY] = 2
+    #Tant qu'on est pas a la position final on reste dans la boucle
     while not resol:
-        if direction_possible(posX, posY, plateau) == [] and len(pile) > 0:
+        #Si il n'y a pas de direction possible et que la pile n'est pas vide, on revient en arriere
+        if len(direction_possible(posX, posY, plateau)) == 0 and len(pile) > 0:
             plateau[posX][posY] = 3
             precedent = pile.pop()
             posX = precedent[0]
             posY = precedent[1]
+        #Sinon on prend une position aléatoire et on avance
         else:
+            pile.append([posX,posY])
             direction = direction_aleatoire(direction_possible(posX, posY, plateau))
             posX = posX + deplacementX(direction)
             posY = posY + deplacementY(direction)
             plateau[posX][posY] = 2
-            pile.append([posX,posY])
+        #Si la position final est atteinte on arrete la boucle
         if posX == posFinalX and posY == posFinalY:
             resol = True
+            #On affiche le départ et l'arrivée pour montrer la fin de la resolution DFS
+            plateau[posX][posY] = 4
+            plateau[0][0] = 4
         draw_plateau(plateau)
         affichage.update()
-        #time.sleep(0.1)
             
+def plateau_to_graphe(plateau):
+    #Transformer le plateau en graphe
+    nodes = {}
+    #initier le dictionnaire nodes avec des valeurs vides pour chaque tuple (x,y)
+    for x in range(len(plateau)):
+        for y in range(len(plateau)):
+            if plateau[x][y] == 0:  # uniquement pour les cases libres
+                nodes[(x, y)] = []
+                
+    for x, y in nodes.keys():
+        if x < WIDTH - 1 and plateau[x+1][y] == 0:
+            nodes[(x, y)].append((x+1, y))
+        if y < HEIGHT - 1 and plateau[x][y+1] == 0:
+            nodes[(x, y)].append((x, y+1))
+        if x > 0 and plateau[x-1][y] == 0:
+            nodes[(x, y)].append((x-1, y))
+        if y > 0 and plateau[x][y-1] == 0:
+            nodes[(x, y)].append((x, y-1))
+
 def generer_labyrinthe(type_resol):
     labyrinthe = [[1 for _ in range(WIDTH)] for _ in range(HEIGHT)]
     dir = [(1,0),(-1,0),(0,1),(0,-1)] #haut bas droite gauche (direction au hasard donc osef)
