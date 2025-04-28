@@ -185,7 +185,7 @@ def resolutionDijkstra(plateau):
 
     for case in chemin_final:
         x, y = case #récupérer les coordonnées dans le tuple
-        plateau[x][y] = 2 # mettre a jour la couleur de la case en cours
+        plateau[x][y] = 3 # mettre a jour la couleur de la case en cours
         draw_plateau(plateau)
         affichage.update()
         
