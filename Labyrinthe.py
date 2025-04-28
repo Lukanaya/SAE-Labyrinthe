@@ -123,7 +123,7 @@ def resolDFS(plateau):
             plateau[0][0] = 4
         draw_plateau(plateau)
         affichage.update()
-            
+                    
 def plateau_to_graphe(plateau):
     #Transformer le plateau en graphe
     nodes = {}
@@ -143,6 +143,56 @@ def plateau_to_graphe(plateau):
         if y > 0 and plateau[x][y-1] == 0:
             nodes[(x, y)].append((x, y-1))
     return nodes
+        
+# résolution par l'algorithme de Dijkstra
+def resolutionDijkstra(plateau):
+    
+    result = {}
+    Q = []
+    #Transformer le plateau en graphe
+    nodes = plateau_to_graphe(plateau)
+    
+    sommetInitial = (0, 0)
+    #Trouver le chemin le plus court dans le graphe
+    # On ajoute les sommets a Q
+    for sommet in nodes.keys():
+        if sommet == sommetInitial:
+            result[sommet] = [0, None]
+        else: 
+            result[sommet] = [math.inf, None]
+        Q.append(sommet)
+    while len(Q) > 0:
+        u = Q[0]
+        for s in Q:
+            if result[s][0] < result[u][0]:
+                u = s
+        Q.remove(u)
+        for v in nodes[u]:
+            if result[u][0] + 1 < result[v][0]:
+                result[v][0] = result[u][0] + 1
+                result[v][1] = u
+    
+    #parcourir le dictionnaire résultat dans le sens inverse et afficher les valeurs sur le labyrinthe en temps réel
+    chemin_final = []
+
+    case = (WIDTH-1, HEIGHT-1) 
+
+    while case is not None:
+        chemin_final.append(case)
+        case = result[case][1]  # remonter le chemin depuis l'arrivée vers le départ
+
+    chemin_final.reverse()  # retourner le tableau pour partir du départ
+
+    for case in chemin_final:
+        x, y = case #récupérer les coordonnées dans le tuple
+        plateau[x][y] = 2 # mettre a jour la couleur de la case en cours
+        draw_plateau(plateau)
+        affichage.update()
+        
+    plateau[0][0] = 4
+    plateau[WIDTH-1][HEIGHT - 1] = 4
+    draw_plateau(plateau)
+    affichage.update()
 
 def generer_labyrinthe(type_resol):
     labyrinthe = [[1 for _ in range(WIDTH)] for _ in range(HEIGHT)]
@@ -202,9 +252,13 @@ def generer_labyrinthe(type_resol):
     match type_resol:
         case "DFS":
             resolDFS(labyrinthe)
+        case "Dijkstra":
+            resolutionDijkstra(labyrinthe)
              
-start_button = tk.Button(affichage, text="Générer le plateau et résolution par DFS", command = lambda: generer_labyrinthe("DFS"))
-start_button.pack()
+bouton_dfs = tk.Button(affichage, text="Générer le plateau et résolution par DFS", command = lambda: generer_labyrinthe("DFS"))
+bouton_dfs.pack()
+bouton_dijkstra = tk.Button(affichage, text="Générer le plateau et résolution par Dijkstra", command = lambda: generer_labyrinthe("Dijkstra"))
+bouton_dijkstra.pack()
 
 # Lancer la boucle principale de l’application
 affichage.mainloop() # permet de garder la fenêtre ouverte en attendant lesinteractions de l’utilisateur
