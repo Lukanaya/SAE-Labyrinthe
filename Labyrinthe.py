@@ -115,7 +115,7 @@ def resolDFS(plateau):
             posX = posX + deplacementX(direction)
             posY = posY + deplacementY(direction)
             plateau[posX][posY] = 2
-        #Si la position final est atteinte on arrete la boucle
+        #Si la position finale est atteinte on arrete la boucle
         if posX == posFinalX and posY == posFinalY:
             resol = True
             #On affiche le départ et l'arrivée pour montrer la fin de la resolution DFS
@@ -142,6 +142,7 @@ def plateau_to_graphe(plateau):
             nodes[(x, y)].append((x-1, y))
         if y > 0 and plateau[x][y-1] == 0:
             nodes[(x, y)].append((x, y-1))
+    return nodes
 
 def generer_labyrinthe(type_resol):
     labyrinthe = [[1 for _ in range(WIDTH)] for _ in range(HEIGHT)]
