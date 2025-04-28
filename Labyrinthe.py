@@ -97,22 +97,22 @@ def resolDFS(plateau):
     pile.append([posX,posY])
     plateau[posX][posY] = 2
     while not resol:
-        if direction_possible(posX, posY, plateau) == [] and len(pile) > 0:
+        if len(direction_possible(posX, posY, plateau)) == 0 and len(pile) > 0:
             plateau[posX][posY] = 3
             precedent = pile.pop()
             posX = precedent[0]
             posY = precedent[1]
+            
         else:
+            pile.append([posX,posY])
             direction = direction_aleatoire(direction_possible(posX, posY, plateau))
             posX = posX + deplacementX(direction)
             posY = posY + deplacementY(direction)
             plateau[posX][posY] = 2
-            pile.append([posX,posY])
         if posX == posFinalX and posY == posFinalY:
             resol = True
         draw_plateau(plateau)
         affichage.update()
-        #time.sleep(0.1)
             
 def generer_labyrinthe(type_resol):
     labyrinthe = [[1 for _ in range(WIDTH)] for _ in range(HEIGHT)]
