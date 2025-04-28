@@ -8,6 +8,7 @@ WIDTH = 21 # Largeur du plateau
 HEIGHT = 21 # Hauteur du plateau
 dim_case = 30
 labyrinthe = [] # Réel plateau (Attention, vérifier qu'il nest pas vide au changement len(labyrinthe) != 0)
+pourcent_mur_a_retirer = 0.02
 
 # Création de la fenêtre Tkinter
 affichage = tk.Tk()
@@ -23,9 +24,9 @@ def draw_plateau(plateau):
     for y in range(HEIGHT):
         for x in range(WIDTH):
             if plateau[x][y] == 1 :
-                canvas.create_rectangle(x * dim_case, y * dim_case, (x + 1) * dim_case, (y + 1) * dim_case, fill="white", outline="gray")
+                canvas.create_rectangle(x * dim_case, y * dim_case, (x + 1) * dim_case, (y + 1) * dim_case, fill="black", outline="gray")
             elif plateau[x][y] == 0:    
-                canvas.create_rectangle(x * dim_case, y * dim_case, (x + 1) * dim_case, (y + 1) * dim_case, fill="red", outline="gray")
+                canvas.create_rectangle(x * dim_case, y * dim_case, (x + 1) * dim_case, (y + 1) * dim_case, fill="white", outline="gray")
             elif plateau[x][y] == 2:
                 canvas.create_rectangle(x * dim_case, y * dim_case, (x + 1) * dim_case, (y + 1) * dim_case, fill="blue", outline="gray")
 
@@ -85,22 +86,88 @@ def generer_labyrinthe():
         affichage.update()
         # time.sleep(0.0000001)
 
+    # Enlever 2% des murs
     nb_mur=0
     for largeur in range(len(labyrinthe)):
         for hauteur in range(len(labyrinthe)):
             if labyrinthe[largeur][hauteur]==1:
                 nb_mur+=1
-    nbNotMur=math.floor(0.02*nb_mur)
+    nbNotMur=math.floor(pourcent_mur_a_retirer*nb_mur)
     while nbNotMur>0:
         x=random.randint(0,WIDTH-1)
         y=random.randint(0,HEIGHT-1)
         if labyrinthe[x][y]==1:
             labyrinthe[x][y]=0
             nbNotMur-=1
+            draw_plateau(labyrinthe)
+            affichage.update()
+            
+    resolutionDijkstra(labyrinthe)
+    
+    
+# résolution par l'algorithme de Dijkstra
+def resolutionDijkstra(plateau):
+    
+    result = {}
+    Q = []
+    #Transformer le plateau en graphe
+    nodes = {}
+    #initier le dictionnaire nodes avec des valeurs vides pour chaque tuple (x,y)
+    for x in range(len(plateau)):
+        for y in range(len(plateau)):
+            if plateau[x][y] == 0:  # uniquement pour les cases libres
+                nodes[(x, y)] = []
+                
+    for x, y in nodes.keys():
+        if x < WIDTH - 1 and plateau[x+1][y] == 0:
+            nodes[(x, y)].append((x+1, y))
+        if y < HEIGHT - 1 and plateau[x][y+1] == 0:
+            nodes[(x, y)].append((x, y+1))
+        if x > 0 and plateau[x-1][y] == 0:
+            nodes[(x, y)].append((x-1, y))
+        if y > 0 and plateau[x][y-1] == 0:
+            nodes[(x, y)].append((x, y-1))
+    
+    sommetInitial = (0, 0)
+    #Trouver le chemin le plus court dans le graphe
+    # On ajoute les sommets a Q
+    for sommet in nodes.keys():
+        if sommet == sommetInitial:
+            result[sommet] = [0, None]
+        else: 
+            result[sommet] = [math.inf, None]
+        Q.append(sommet)
+    while len(Q) > 0:
+        u = Q[0]
+        for s in Q:
+            if result[s][0] < result[u][0]:
+                u = s
+        Q.remove(u)
+        for v in nodes[u]:
+            if result[u][0] + 1 < result[v][0]:
+                result[v][0] = result[u][0] + 1
+                result[v][1] = u
+    
+    #parcourir le dictionnaire résultat dans le sens inverse et afficher les valeurs sur le labyrinthe en temps réel
+    chemin_final = []
 
+    case = (WIDTH-1, HEIGHT-1) 
 
-# Bouton pour lancer "generer_n_case_aleatoire"
-start_button = tk.Button(affichage, text="Générer le plateau", command = lambda: generer_labyrinthe())
+    while case is not None:
+        chemin_final.append(case)
+        case = result[case][1]  # remonter le chemin depuis l'arrivée vers le départ
+
+    chemin_final.reverse()  # retourner le tableau pour partir du départ
+
+    for case in chemin_final:
+        x, y = case #récupérer les coordonnées dans le tuple
+        plateau[x][y] = 2 # mettre a jour la couleur de la case en cours
+        draw_plateau(plateau)
+        affichage.update()
+            
+
+# Bouton pour lancer la génération et résolution du labyrinthe
+start_button = tk.Button(affichage, text="Générer le plateau et résoudre par Dijkstra", command = lambda: generer_labyrinthe())
 start_button.pack()
 
 # Lancer la boucle principale de l’application
