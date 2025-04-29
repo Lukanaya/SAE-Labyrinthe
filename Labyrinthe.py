@@ -5,10 +5,10 @@ import math
 import copy
 
 # Dimensions du plateau/cases
-WIDTH = 21 # Largeur du plateau
-HEIGHT = 21 # Hauteur du plateau
-dim_case = 30
-proba_mur_retire = 0.05
+WIDTH = 101 # Largeur du plateau
+HEIGHT = 101 # Hauteur du plateau
+dim_case = 8
+proba_mur_retire = 0.02
 
 def direction_aleatoire(direction):
     if len(direction) == 1:
@@ -136,11 +136,13 @@ class Labyrinthe:
             #Si la position finale est atteinte on arrete la boucle
             if posX == posFinalX and posY == posFinalY:
                 resol = True
-                #On affiche le départ et l'arrivée pour montrer la fin de la resolution DFS
-                plateau[posX][posY] = 4
-                plateau[0][0] = 4
-            self.draw_plateau(plateau)
-            self.affichage.update()
+            #self.draw_plateau(plateau)
+            #self.affichage.update()
+        #On affiche le départ et l'arrivée pour montrer la fin de la resolution DFS
+        plateau[posX][posY] = 4
+        plateau[0][0] = 4
+        self.draw_plateau(plateau)
+        self.affichage.update()
             
     # résolution par l'algorithme de Dijkstra
     def resolutionDijkstra(self):
@@ -183,9 +185,9 @@ class Labyrinthe:
 
         for case in chemin_final:
             x, y = case #récupérer les coordonnées dans le tuple
-            plateau[x][y] = 2 # mettre a jour la couleur de la case en cours
-            self.draw_plateau(plateau)
-            self.affichage.update()
+            plateau[x][y] = 3 # mettre a jour la couleur de la case en cours
+            #self.draw_plateau(plateau)
+            #self.affichage.update()
             
         plateau[0][0] = 4
         plateau[WIDTH-1][HEIGHT - 1] = 4
@@ -232,8 +234,8 @@ class Labyrinthe:
             for sommet in chemin:
                 x, y = sommet
                 plateau[x][y] = 5
-                self.draw_plateau(plateau)
-                self.affichage.update()
+                #self.draw_plateau(plateau)
+                #self.affichage.update()
             plateau[0][0] = 4
             plateau[WIDTH-1][HEIGHT-1] = 4
             self.draw_plateau(plateau)
@@ -274,10 +276,8 @@ class Labyrinthe:
             #On vérifie si il n'y a plus de possibilité
             if len(pile)==0: terminer=True
 
-            self.draw_plateau(plateau)
-            # permet de faire une pause de 1 seconde entre l’affichage des deux carrés
-            self.affichage.update()
-            # time.sleep(0.0000001)
+            #self.draw_plateau(plateau)
+            #self.affichage.update()
 
         nb_mur=0
         for largeur in range(len(plateau)):
@@ -291,8 +291,10 @@ class Labyrinthe:
             if plateau[x][y]==1:
                 plateau[x][y]=0
                 nbNotMur-=1
-            self.draw_plateau(plateau)
-            self.affichage.update()
+            #self.draw_plateau(plateau)
+            #self.affichage.update()
+        self.draw_plateau(plateau)
+        self.affichage.update()
         return plateau
 
     def fonctionGenererLabyrinthe(self):
