@@ -319,6 +319,9 @@ class Labyrinthe:
             self.draw_plateau(plateau)
             print("Il a fallu" , self.deplacement , "deplacements")
             self.affichage.unbind("<Key>")
+            self.posX = 0
+            self.posY = 0
+            self.deplacement = 0
             return
             
         self.draw_plateau(plateau)
@@ -409,9 +412,6 @@ class Labyrinthe:
     def fonctionResolutionManuelle(self):
         if self.labyrinthe:
             self.affichage.bind("<Key>", self.move)
-            self.posX = 0
-            self.posY = 0
-            self.deplacement = 0
 
     def run(self):
         self.affichage.mainloop()
