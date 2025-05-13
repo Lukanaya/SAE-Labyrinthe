@@ -110,14 +110,27 @@ class Labyrinthe:
         self.affichage.title("Génération d'un labyrinthe")
         self.canvas = tk.Canvas(self.affichage, width=WIDTH * dim_case, height=HEIGHT * dim_case)
         self.canvas.pack()
+        self.boutons = []
         self.setup_boutons()
         
     def setup_boutons(self):
-        tk.Button(self.affichage, text="Générer le plateau", command = self.fonctionGenererLabyrinthe).pack()
-        tk.Button(self.affichage, text="Générer le plateau et résolution par DFS", command = self.fonctionResolutionDFS).pack()
-        tk.Button(self.affichage, text="Générer le plateau et résolution par Dijkstra", command = self.fonctionResolutionDijkstra).pack()
-        tk.Button(self.affichage, text="Générer le plateau et résolution par Blinky", command = self.fonctionResolutionBlinky).pack()
+        bouton = tk.Button(self.affichage, text="Générer le plateau", command = self.fonctionGenererLabyrinthe)
+        bouton.pack()
+        self.boutons.append(bouton)
+        bouton1 = tk.Button(self.affichage, text="Résolution par DFS", command = self.fonctionResolutionDFS, state=tk.DISABLED)
+        bouton1.pack()
+        self.boutons.append(bouton1)
+        bouton2 = tk.Button(self.affichage, text="Résolution par Dijkstra", command = self.fonctionResolutionDijkstra, state=tk.DISABLED)
+        bouton2.pack()
+        self.boutons.append(bouton2)
+        bouton3 = tk.Button(self.affichage, text="Résolution par Blinky", command = self.fonctionResolutionBlinky, state=tk.DISABLED)
+        bouton3.pack()
+        self.boutons.append(bouton3)
 
+    def activerBoutons(self):
+        for i in range(1, len(self.boutons)):
+            self.boutons[i].config(state=tk.NORMAL)
+            
     def draw_plateau(self, plateau):
         self.canvas.delete("all")
         for y in range(HEIGHT):
@@ -350,14 +363,15 @@ class Labyrinthe:
 
     def fonctionGenererLabyrinthe(self):
         self.labyrinthe = self.generer_labyrinthe()
+        self.activerBoutons()
         
     def fonctionResolutionDFS(self):
         if self.labyrinthe:
-            self.resolutionDFS()   
+            self.resolutionDFS()
                  
     def fonctionResolutionDijkstra(self):
         if self.labyrinthe:
-            self.resolutionDijkstra()    
+            self.resolutionDijkstra()
                 
     def fonctionResolutionBlinky(self):
         if self.labyrinthe:
