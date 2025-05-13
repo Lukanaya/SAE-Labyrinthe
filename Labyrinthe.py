@@ -5,9 +5,9 @@ import math
 import copy
 
 # Dimensions du plateau/cases
-WIDTH = 101 # Largeur du plateau
-HEIGHT = 101 # Hauteur du plateau
-dim_case = 8
+WIDTH = 5 # Largeur du plateau
+HEIGHT = 5 # Hauteur du plateau
+dim_case = 15
 proba_mur_retire = 0.02
 
 def direction_aleatoire(direction):
@@ -35,15 +35,47 @@ def deplacementY(direction):
 
 def direction_possible(posX, posY, plateau):
     direction_possible = []
-    if posX - 1 >= 0 and plateau[posX - 1][posY] == 0:
+    if posX - 1 >= 0 and (plateau[posX - 1][posY] == 0 or plateau[posX-1][posY] == 6):
         direction_possible.append("gauche")
-    if posX + 1 < len(plateau) and plateau[posX + 1][posY] == 0:
+    if posX + 1 < len(plateau) and (plateau[posX + 1][posY] == 0 or plateau[posX+1][posY] == 6):
         direction_possible.append("droite")
-    if posY - 1 >= 0 and plateau[posX][posY - 1] == 0:
+    if posY - 1 >= 0 and (plateau[posX][posY - 1] == 0 or plateau[posX][posY-1] == 6):
         direction_possible.append("haut")
-    if posY + 1 < len(plateau[0]) and plateau[posX][posY + 1] == 0:
+    if posY + 1 < len(plateau[0]) and (plateau[posX][posY + 1] == 0 or plateau[posX][posY+1] == 6):
         direction_possible.append("bas")
     return direction_possible
+
+def plateau_to_graphe_avec_teleporteur(plateau):
+    #Transformer le plateau en graphe
+    nodes = {}
+    #initier le dictionnaire nodes avec des valeurs vides pour chaque tuple (x,y)
+    tp1 = None
+    tp2 = None
+    for x in range(len(plateau)):
+        for y in range(len(plateau)):
+            if plateau[x][y] == 0 or plateau[x][y] == 6:  # uniquement pour les cases libres
+                nodes[(x, y)] = []
+            if plateau[x][y] == 6:
+                if tp1 is None:
+                    tp1 = (x,y)
+                else:
+                    tp2 = (x,y)
+
+
+    for x, y in nodes.keys():
+        if x < WIDTH - 1 and (plateau[x+1][y] == 0 or plateau[x+1][y] == 6):
+            nodes[(x, y)].append((x+1, y))
+        if y < HEIGHT - 1 and (plateau[x][y+1] == 0 or plateau[x][y+1] == 6):
+            nodes[(x, y)].append((x, y+1))
+        if x > 0 and (plateau[x-1][y] == 0 or plateau[x-1][y] == 6):
+            nodes[(x, y)].append((x-1, y))
+        if y > 0 and (plateau[x][y-1] == 0 or plateau[x][y-1] == 6):
+            nodes[(x, y)].append((x, y-1))
+        if x == tp1[0] and y == tp1[1]:
+            nodes[(x, y)].append((tp2[0], tp2[1]))
+        if x == tp2[0] and y == tp2[1]:
+            nodes[(x, y)].append((tp1[0], tp1[1]))
+    return nodes
 
 def plateau_to_graphe(plateau):
     #Transformer le plateau en graphe
@@ -51,17 +83,18 @@ def plateau_to_graphe(plateau):
     #initier le dictionnaire nodes avec des valeurs vides pour chaque tuple (x,y)
     for x in range(len(plateau)):
         for y in range(len(plateau)):
-            if plateau[x][y] == 0:  # uniquement pour les cases libres
+            if plateau[x][y] == 0 or plateau[x][y] == 6:  # uniquement pour les cases libres
                 nodes[(x, y)] = []
-                
+
+
     for x, y in nodes.keys():
-        if x < WIDTH - 1 and plateau[x+1][y] == 0:
+        if x < WIDTH - 1 and (plateau[x+1][y] == 0 or plateau[x+1][y] == 6):
             nodes[(x, y)].append((x+1, y))
-        if y < HEIGHT - 1 and plateau[x][y+1] == 0:
+        if y < HEIGHT - 1 and (plateau[x][y+1] == 0 or plateau[x][y+1] == 6):
             nodes[(x, y)].append((x, y+1))
-        if x > 0 and plateau[x-1][y] == 0:
+        if x > 0 and (plateau[x-1][y] == 0 or plateau[x-1][y] == 6):
             nodes[(x, y)].append((x-1, y))
-        if y > 0 and plateau[x][y-1] == 0:
+        if y > 0 and (plateau[x][y-1] == 0 or plateau[x][y-1] == 6):
             nodes[(x, y)].append((x, y-1))
     return nodes
         
@@ -102,6 +135,8 @@ class Labyrinthe:
                     self.canvas.create_rectangle(x * dim_case, y * dim_case, (x+1) * dim_case, (y+1) * dim_case, fill="yellow", outline="gray") 
                 elif plateau[x][y] == 5:
                     self.canvas.create_rectangle(x * dim_case, y * dim_case, (x+1) * dim_case, (y+1) * dim_case, fill="green", outline="gray")
+                elif plateau[x][y] == 6:
+                    self.canvas.create_rectangle(x * dim_case, y * dim_case, (x+1) * dim_case, (y+1) * dim_case, fill="purple", outline="gray")
                     
 
     #Resolution DFS
@@ -150,7 +185,7 @@ class Labyrinthe:
         result = {}
         Q = []
         #Transformer le plateau en graphe
-        nodes = plateau_to_graphe(plateau)
+        nodes = plateau_to_graphe_avec_teleporteur(plateau)
         
         sommetInitial = (0, 0)
         #Trouver le chemin le plus court dans le graphe
@@ -293,6 +328,14 @@ class Labyrinthe:
                 nbNotMur-=1
             #self.draw_plateau(plateau)
             #self.affichage.update()
+        teleport = 0
+        while teleport < 2:
+            x=random.randint(0,WIDTH-1)
+            y=random.randint(0,HEIGHT-1)
+            if plateau[x][y]==0:
+                plateau[x][y]=6
+                teleport += 1
+       
         self.draw_plateau(plateau)
         self.affichage.update()
         return plateau
