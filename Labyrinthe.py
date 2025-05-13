@@ -5,10 +5,11 @@ import math
 import copy
 
 # Dimensions du plateau/cases
-WIDTH = 5 # Largeur du plateau
-HEIGHT = 5 # Hauteur du plateau
+WIDTH = 11 # Largeur du plateau
+HEIGHT = 11 # Hauteur du plateau
 dim_case = 15
 proba_mur_retire = 0.02
+
 
 def direction_aleatoire(direction):
     if len(direction) == 1:
@@ -33,48 +34,47 @@ def deplacementY(direction):
         valeur = + 1
     return valeur 
 
-def direction_possible(posX, posY, plateau):
-    direction_possible = []
-    if posX - 1 >= 0 and (plateau[posX - 1][posY] == 0 or plateau[posX-1][posY] == 6):
-        direction_possible.append("gauche")
-    if posX + 1 < len(plateau) and (plateau[posX + 1][posY] == 0 or plateau[posX+1][posY] == 6):
-        direction_possible.append("droite")
-    if posY - 1 >= 0 and (plateau[posX][posY - 1] == 0 or plateau[posX][posY-1] == 6):
-        direction_possible.append("haut")
-    if posY + 1 < len(plateau[0]) and (plateau[posX][posY + 1] == 0 or plateau[posX][posY+1] == 6):
-        direction_possible.append("bas")
-    return direction_possible
-
-def plateau_to_graphe_avec_teleporteur(plateau):
-    #Transformer le plateau en graphe
-    nodes = {}
-    #initier le dictionnaire nodes avec des valeurs vides pour chaque tuple (x,y)
+def coordoneesTeleporteurs(plateau):
+    # récupérer les positions des téléporteurs
     tp1 = None
     tp2 = None
     for x in range(len(plateau)):
         for y in range(len(plateau)):
-            if plateau[x][y] == 0 or plateau[x][y] == 6:  # uniquement pour les cases libres
-                nodes[(x, y)] = []
             if plateau[x][y] == 6:
                 if tp1 is None:
                     tp1 = (x,y)
                 else:
                     tp2 = (x,y)
+    return (tp1,tp2)
+    
 
+def caseOK(plateau, x, y):
+    valeursOK = [0,6,5] # Les cases que l'on peut parcourir
+    return (plateau[x][y] in valeursOK)
 
+def direction_possible(posX, posY, plateau):
+    direction_possible = []
+    if posX - 1 >= 0 and caseOK(plateau, posX-1, posY):
+        direction_possible.append("gauche")
+    if posX + 1 < len(plateau) and caseOK(plateau, posX+1, posY):
+        direction_possible.append("droite")
+    if posY - 1 >= 0 and caseOK(plateau, posX, posY-1):
+        direction_possible.append("haut")
+    if posY + 1 < len(plateau[0]) and caseOK(plateau, posX, posY+1):
+        direction_possible.append("bas")
+    return direction_possible
+
+def plateau_to_graphe_avec_teleporteur(plateau):
+    #Transformer le plateau en graphe
+    nodes = plateau_to_graphe(plateau)
+    tp1, tp2 = coordoneesTeleporteurs(plateau)
+
+    # ajouter les coordonnées d'un téléporteur au suivants de l'autre téléporteur
     for x, y in nodes.keys():
-        if x < WIDTH - 1 and (plateau[x+1][y] == 0 or plateau[x+1][y] == 6):
-            nodes[(x, y)].append((x+1, y))
-        if y < HEIGHT - 1 and (plateau[x][y+1] == 0 or plateau[x][y+1] == 6):
-            nodes[(x, y)].append((x, y+1))
-        if x > 0 and (plateau[x-1][y] == 0 or plateau[x-1][y] == 6):
-            nodes[(x, y)].append((x-1, y))
-        if y > 0 and (plateau[x][y-1] == 0 or plateau[x][y-1] == 6):
-            nodes[(x, y)].append((x, y-1))
-        if x == tp1[0] and y == tp1[1]:
-            nodes[(x, y)].append((tp2[0], tp2[1]))
-        if x == tp2[0] and y == tp2[1]:
-            nodes[(x, y)].append((tp1[0], tp1[1]))
+        if (x,y) == tp1:
+            nodes[(x, y)].append(tp2)
+        if (x,y) == tp2:
+            nodes[(x, y)].append(tp1)
     return nodes
 
 def plateau_to_graphe(plateau):
@@ -83,18 +83,17 @@ def plateau_to_graphe(plateau):
     #initier le dictionnaire nodes avec des valeurs vides pour chaque tuple (x,y)
     for x in range(len(plateau)):
         for y in range(len(plateau)):
-            if plateau[x][y] == 0 or plateau[x][y] == 6:  # uniquement pour les cases libres
+            if caseOK(plateau, x, y):  # uniquement pour les cases libres
                 nodes[(x, y)] = []
 
-
     for x, y in nodes.keys():
-        if x < WIDTH - 1 and (plateau[x+1][y] == 0 or plateau[x+1][y] == 6):
+        if x < WIDTH - 1 and caseOK(plateau, x+1, y):
             nodes[(x, y)].append((x+1, y))
-        if y < HEIGHT - 1 and (plateau[x][y+1] == 0 or plateau[x][y+1] == 6):
+        if y < HEIGHT - 1 and caseOK(plateau, x, y+1):
             nodes[(x, y)].append((x, y+1))
-        if x > 0 and (plateau[x-1][y] == 0 or plateau[x-1][y] == 6):
+        if x > 0 and caseOK(plateau, x-1, y):
             nodes[(x, y)].append((x-1, y))
-        if y > 0 and (plateau[x][y-1] == 0 or plateau[x][y-1] == 6):
+        if y > 0 and caseOK(plateau, x, y-1):
             nodes[(x, y)].append((x, y-1))
     return nodes
         
@@ -112,12 +111,16 @@ class Labyrinthe:
         self.canvas = tk.Canvas(self.affichage, width=WIDTH * dim_case, height=HEIGHT * dim_case)
         self.canvas.pack()
         self.setup_boutons()
+        self.posY = 0
+        self.posX = 0
+        self.deplacement = 0
         
     def setup_boutons(self):
         tk.Button(self.affichage, text="Générer le plateau", command = self.fonctionGenererLabyrinthe).pack()
-        tk.Button(self.affichage, text="Générer le plateau et résolution par DFS", command = self.fonctionResolutionDFS).pack()
-        tk.Button(self.affichage, text="Générer le plateau et résolution par Dijkstra", command = self.fonctionResolutionDijkstra).pack()
-        tk.Button(self.affichage, text="Générer le plateau et résolution par Blinky", command = self.fonctionResolutionBlinky).pack()
+        tk.Button(self.affichage, text="Résolution par DFS", command = self.fonctionResolutionDFS).pack()
+        tk.Button(self.affichage, text="Résolution par Dijkstra", command = self.fonctionResolutionDijkstra).pack()
+        tk.Button(self.affichage, text="Résolution par Blinky", command = self.fonctionResolutionBlinky).pack()
+        tk.Button(self.affichage, text="Résolution manuelle", command = self.fonctionResolutionManuelle).pack()
 
     def draw_plateau(self, plateau):
         self.canvas.delete("all")
@@ -142,6 +145,7 @@ class Labyrinthe:
     #Resolution DFS
     def resolutionDFS(self):
         plateau = copy.deepcopy(self.labyrinthe)
+        tp1, tp2 = coordoneesTeleporteurs(plateau)
         #Initialisation de la position de départ
         posX = 0
         posY = 0
@@ -176,12 +180,15 @@ class Labyrinthe:
         #On affiche le départ et l'arrivée pour montrer la fin de la resolution DFS
         plateau[posX][posY] = 4
         plateau[0][0] = 4
+        plateau[tp1[0]][tp1[1]] = 6
+        plateau[tp2[0]][tp2[1]] = 6
         self.draw_plateau(plateau)
         self.affichage.update()
             
     # résolution par l'algorithme de Dijkstra
     def resolutionDijkstra(self):
         plateau = copy.deepcopy(self.labyrinthe)
+        tp1, tp2 = coordoneesTeleporteurs(plateau)
         result = {}
         Q = []
         #Transformer le plateau en graphe
@@ -226,12 +233,15 @@ class Labyrinthe:
             
         plateau[0][0] = 4
         plateau[WIDTH-1][HEIGHT - 1] = 4
+        plateau[tp1[0]][tp1[1]] = 6
+        plateau[tp2[0]][tp2[1]] = 6
         self.draw_plateau(plateau)
         self.affichage.update()
 
         
     def resolutionBlinky(self):
         plateau = copy.deepcopy(self.labyrinthe)
+        tp1, tp2 = coordoneesTeleporteurs(plateau)
         nodes = plateau_to_graphe(plateau)
         result = {}
         Q = []
@@ -273,9 +283,50 @@ class Labyrinthe:
                 #self.affichage.update()
             plateau[0][0] = 4
             plateau[WIDTH-1][HEIGHT-1] = 4
+            plateau[tp1[0]][tp1[1]] = 6
+            plateau[tp2[0]][tp2[1]] = 6
             self.draw_plateau(plateau)
             self.affichage.update()
+
+    
+    def move(self, event):
+        plateau = copy.deepcopy(self.labyrinthe)
+        tp1, tp2 = coordoneesTeleporteurs(plateau)
+        self.draw_plateau(plateau)
+        touche = event.keysym
+        if touche == 'Up':
+            if(self.posY-1 >= 0 and caseOK(plateau,self.posX,self.posY-1)):
+                self.posY-=1
+                self.deplacement += 1
+        elif touche == 'Down':
+            if(self.posY+1 < HEIGHT and caseOK(plateau,self.posX,self.posY+1)):
+                self.posY+=1
+                self.deplacement += 1
+        elif touche == 'Right':
+            if(self.posX+1 < WIDTH and caseOK(plateau,self.posX+1,self.posY)):
+                self.posX+=1
+                self.deplacement += 1
+        elif touche == 'Left':
+            if(self.posX-1 >= 0 and caseOK(plateau,self.posX-1,self.posY)):
+                self.posX-=1
+                self.deplacement += 1
+        if (self.posX, self.posY) == tp1:
+            self.posX, self.posY = tp2
+        elif (self.posX, self.posY) == tp2:
+            self.posX, self.posY = tp1
+        plateau[self.posX][self.posY] = 5
+        if self.posX == WIDTH-1 and self.posY == HEIGHT-1:
+            self.draw_plateau(plateau)
+            print("Il a fallu" , self.deplacement , "deplacements")
+            self.affichage.unbind("<Key>")
+            return
             
+        self.draw_plateau(plateau)
+        self.affichage.update()
+        #print(self.posX, self.posY)
+        
+
+
     def generer_labyrinthe(self):
         plateau = [[1 for _ in range(WIDTH)] for _ in range(HEIGHT)]
         dir = [(1,0),(-1,0),(0,1),(0,-1)] #haut bas droite gauche (direction au hasard donc osef)
@@ -354,7 +405,14 @@ class Labyrinthe:
     def fonctionResolutionBlinky(self):
         if self.labyrinthe:
             self.resolutionBlinky()
-            
+    
+    def fonctionResolutionManuelle(self):
+        if self.labyrinthe:
+            self.affichage.bind("<Key>", self.move)
+            self.posX = 0
+            self.posY = 0
+            self.deplacement = 0
+
     def run(self):
         self.affichage.mainloop()
 
