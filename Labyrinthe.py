@@ -52,7 +52,7 @@ def coordoneesTeleporteurs(plateau):
     
 
 def caseOK(plateau, x, y):
-    valeursOK = [0,6,5] # Les cases que l'on peut parcourir
+    valeursOK = [0,6] # Les cases que l'on peut parcourir
     return (plateau[x][y] in valeursOK)
 
 def direction_possible(posX, posY, plateau):
