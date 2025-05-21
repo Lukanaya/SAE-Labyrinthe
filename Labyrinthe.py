@@ -4,7 +4,6 @@ import time
 import math
 import copy
 from time import time 
-#from numpy import *
 from matplotlib.pyplot import *
 
 # Dimensions du plateau/cases
