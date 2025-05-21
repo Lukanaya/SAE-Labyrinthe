@@ -131,6 +131,7 @@ class Labyrinthe:
         self.boutons.append(bouton3)
         bouton4 = tk.Button(self.affichage, text="Résolution manuelle", command = self.fonctionResolutionManuelle, state= tk.DISABLED)
         bouton4.pack()
+        self.boutons.append(bouton4)
 
     def activerBoutons(self):
         for i in range(1, len(self.boutons)):
