@@ -3,11 +3,14 @@ import random
 import time
 import math
 import copy
+from time import time 
+#from numpy import *
+from matplotlib.pyplot import *
 
 # Dimensions du plateau/cases
-WIDTH = 31 # Largeur du plateau
-HEIGHT = 31 # Hauteur du plateau
-dim_case = 15
+WIDTH = 51 # Largeur du plateau
+HEIGHT = 51 # Hauteur du plateau
+dim_case = 2
 proba_mur_retire = 0.02
 
 
@@ -132,6 +135,9 @@ class Labyrinthe:
         bouton4 = tk.Button(self.affichage, text="Résolution manuelle", command = self.fonctionResolutionManuelle, state= tk.DISABLED)
         bouton4.pack()
         self.boutons.append(bouton4)
+        bouton5 = tk.Button(self.affichage, text="Comparaison des fonctions", command = self.comparaison_temps)
+        bouton5.pack()
+        self.boutons.append(bouton5)
 
     def activerBoutons(self):
         for i in range(1, len(self.boutons)):
@@ -158,7 +164,7 @@ class Labyrinthe:
                     
 
     #Resolution DFS
-    def resolutionDFS(self):
+    def resolutionDFS(self, affichage):
         plateau = copy.deepcopy(self.labyrinthe)
         tp1, tp2 = coordoneesTeleporteurs(plateau)
         #Initialisation de la position de départ
@@ -190,18 +196,20 @@ class Labyrinthe:
             #Si la position finale est atteinte on arrete la boucle
             if posX == posFinalX and posY == posFinalY:
                 resol = True
-            #self.draw_plateau(plateau)
-            #self.affichage.update()
+                if affichage:
+                    self.draw_plateau(plateau)
+                    self.affichage.update()
         #On affiche le départ et l'arrivée pour montrer la fin de la resolution DFS
         plateau[posX][posY] = 4
         plateau[0][0] = 4
         plateau[tp1[0]][tp1[1]] = 6
         plateau[tp2[0]][tp2[1]] = 6
-        self.draw_plateau(plateau)
-        self.affichage.update()
+        if affichage:
+            self.draw_plateau(plateau)
+            self.affichage.update()
             
     # résolution par l'algorithme de Dijkstra
-    def resolutionDijkstra(self):
+    def resolutionDijkstra(self, affichage):
         plateau = copy.deepcopy(self.labyrinthe)
         tp1, tp2 = coordoneesTeleporteurs(plateau)
         result = {}
@@ -243,18 +251,20 @@ class Labyrinthe:
         for case in chemin_final:
             x, y = case #récupérer les coordonnées dans le tuple
             plateau[x][y] = 3 # mettre a jour la couleur de la case en cours
-            #self.draw_plateau(plateau)
-            #self.affichage.update()
+            if affichage:
+                self.draw_plateau(plateau)
+                self.affichage.update()
             
         plateau[0][0] = 4
         plateau[WIDTH-1][HEIGHT - 1] = 4
         plateau[tp1[0]][tp1[1]] = 6
         plateau[tp2[0]][tp2[1]] = 6
-        self.draw_plateau(plateau)
-        self.affichage.update()
+        if affichage:
+            self.draw_plateau(plateau)
+            self.affichage.update()
 
         
-    def resolutionBlinky(self):
+    def resolutionBlinky(self, affichage):
         plateau = copy.deepcopy(self.labyrinthe)
         tp1, tp2 = coordoneesTeleporteurs(plateau)
         nodes = plateau_to_graphe(plateau)
@@ -294,14 +304,16 @@ class Labyrinthe:
             for sommet in chemin:
                 x, y = sommet
                 plateau[x][y] = 5
-                #self.draw_plateau(plateau)
-                #self.affichage.update()
+                if affichage:
+                    self.draw_plateau(plateau)
+                    self.affichage.update()
             plateau[0][0] = 4
             plateau[WIDTH-1][HEIGHT-1] = 4
             plateau[tp1[0]][tp1[1]] = 6
             plateau[tp2[0]][tp2[1]] = 6
-            self.draw_plateau(plateau)
-            self.affichage.update()
+            if affichage:
+                self.draw_plateau(plateau)
+                self.affichage.update()
 
     
     def move(self, event):
@@ -343,9 +355,33 @@ class Labyrinthe:
         self.affichage.update()
         #print(self.posX, self.posY)
         
-
-
-    def generer_labyrinthe(self):
+    def comparaison_temps(self):
+        
+        TempsDFS = []
+        TempsDijkstra = []
+        TempsBlinky = []
+        for i in range (100):
+            print(i)
+            self.labyrinthe = self.generer_labyrinthe(False)
+            t1 = time.time()
+            self.resolutionDFS(False)
+            t2 = time.time()
+            TempsDFS.append(t2 - t1)
+            t3 = time.time()
+            self.resolutionDijkstra(False)
+            t4= time.time()
+            TempsDijkstra.append(t4 - t3)
+            t5 = time.time()
+            self.resolutionBlinky(False)
+            t6 = time.time()
+            TempsBlinky.append(t6 - t5)
+        semilogy(TempsDFS, 'b', TempsDijkstra, 'r', TempsBlinky, 'g')
+        title(f'Comparaison de résolution pour labyrinthe de taille {WIDTH} x {HEIGHT}')
+        ylabel("Secondes (s)")
+        xlabel("Itérations")
+        show()
+        
+    def generer_labyrinthe(self, affichage):
         plateau = [[1 for _ in range(WIDTH)] for _ in range(HEIGHT)]
         dir = [(1,0),(-1,0),(0,1),(0,-1)] #haut bas droite gauche (direction au hasard donc osef)
 
@@ -404,30 +440,31 @@ class Labyrinthe:
             if plateau[x][y]==0:
                 plateau[x][y]=6
                 teleport += 1
-       
-        self.draw_plateau(plateau)
-        self.affichage.update()
+        if affichage:
+            self.draw_plateau(plateau)
+            self.affichage.update()
         return plateau
 
     def fonctionGenererLabyrinthe(self):
-        self.labyrinthe = self.generer_labyrinthe()
+        self.labyrinthe = self.generer_labyrinthe(True)
         self.activerBoutons()
         
     def fonctionResolutionDFS(self):
         if self.labyrinthe:
-            self.resolutionDFS()
+            self.resolutionDFS(True)
                  
     def fonctionResolutionDijkstra(self):
         if self.labyrinthe:
-            self.resolutionDijkstra()
+            self.resolutionDijkstra(True)
                 
     def fonctionResolutionBlinky(self):
         if self.labyrinthe:
-            self.resolutionBlinky()
+            self.resolutionBlinky(True)
     
     def fonctionResolutionManuelle(self):
         if self.labyrinthe:
             self.affichage.bind("<Key>", self.move)
+
 
     def run(self):
         self.affichage.mainloop()
