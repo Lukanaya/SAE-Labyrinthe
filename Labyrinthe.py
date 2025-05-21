@@ -49,7 +49,7 @@ def coordoneesTeleporteurs(plateau):
     
 
 def caseOK(plateau, x, y):
-    valeursOK = [0,6] # Les cases que l'on peut parcourir
+    valeursOK = [0,6,5] # Les cases que l'on peut parcourir
     return (plateau[x][y] in valeursOK)
 
 def direction_possible(posX, posY, plateau):
@@ -112,6 +112,9 @@ class Labyrinthe:
         self.canvas.pack()
         self.boutons = []
         self.setup_boutons()
+        self.posY = 0
+        self.posX = 0
+        self.deplacement = 0
         
     def setup_boutons(self):
         bouton = tk.Button(self.affichage, text="Générer le plateau", command = self.fonctionGenererLabyrinthe)
@@ -126,6 +129,8 @@ class Labyrinthe:
         bouton3 = tk.Button(self.affichage, text="Résolution par Blinky", command = self.fonctionResolutionBlinky, state=tk.DISABLED)
         bouton3.pack()
         self.boutons.append(bouton3)
+        bouton4 = tk.Button(self.affichage, text="Résolution manuelle", command = self.fonctionResolutionManuelle, state= tk.DISABLED)
+        bouton4.pack()
 
     def activerBoutons(self):
         for i in range(1, len(self.boutons)):
@@ -296,7 +301,49 @@ class Labyrinthe:
             plateau[tp2[0]][tp2[1]] = 6
             self.draw_plateau(plateau)
             self.affichage.update()
+
+    
+    def move(self, event):
+        plateau = copy.deepcopy(self.labyrinthe)
+        tp1, tp2 = coordoneesTeleporteurs(plateau)
+        self.draw_plateau(plateau)
+        touche = event.keysym
+        if touche == 'Up':
+            if(self.posY-1 >= 0 and caseOK(plateau,self.posX,self.posY-1)):
+                self.posY-=1
+                self.deplacement += 1
+        elif touche == 'Down':
+            if(self.posY+1 < HEIGHT and caseOK(plateau,self.posX,self.posY+1)):
+                self.posY+=1
+                self.deplacement += 1
+        elif touche == 'Right':
+            if(self.posX+1 < WIDTH and caseOK(plateau,self.posX+1,self.posY)):
+                self.posX+=1
+                self.deplacement += 1
+        elif touche == 'Left':
+            if(self.posX-1 >= 0 and caseOK(plateau,self.posX-1,self.posY)):
+                self.posX-=1
+                self.deplacement += 1
+        if (self.posX, self.posY) == tp1:
+            self.posX, self.posY = tp2
+        elif (self.posX, self.posY) == tp2:
+            self.posX, self.posY = tp1
+        plateau[self.posX][self.posY] = 5
+        if self.posX == WIDTH-1 and self.posY == HEIGHT-1:
+            self.draw_plateau(plateau)
+            print("Il a fallu" , self.deplacement , "deplacements")
+            self.affichage.unbind("<Key>")
+            self.posX = 0
+            self.posY = 0
+            self.deplacement = 0
+            return
             
+        self.draw_plateau(plateau)
+        self.affichage.update()
+        #print(self.posX, self.posY)
+        
+
+
     def generer_labyrinthe(self):
         plateau = [[1 for _ in range(WIDTH)] for _ in range(HEIGHT)]
         dir = [(1,0),(-1,0),(0,1),(0,-1)] #haut bas droite gauche (direction au hasard donc osef)
@@ -376,7 +423,11 @@ class Labyrinthe:
     def fonctionResolutionBlinky(self):
         if self.labyrinthe:
             self.resolutionBlinky()
-            
+    
+    def fonctionResolutionManuelle(self):
+        if self.labyrinthe:
+            self.affichage.bind("<Key>", self.move)
+
     def run(self):
         self.affichage.mainloop()
 
