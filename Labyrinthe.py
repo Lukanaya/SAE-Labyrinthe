@@ -7,9 +7,9 @@ from time import time
 from matplotlib.pyplot import *
 
 # Dimensions du plateau/cases
-WIDTH = 51 # Largeur du plateau
-HEIGHT = 51 # Hauteur du plateau
-dim_case = 2
+WIDTH = 31 # Largeur du plateau
+HEIGHT = 31 # Hauteur du plateau
+dim_case = 10
 proba_mur_retire = 0.02
 
 
@@ -195,9 +195,9 @@ class Labyrinthe:
             #Si la position finale est atteinte on arrete la boucle
             if posX == posFinalX and posY == posFinalY:
                 resol = True
-                if affichage:
-                    self.draw_plateau(plateau)
-                    self.affichage.update()
+            if affichage:
+                self.draw_plateau(plateau)
+                self.affichage.update()
         #On affiche le départ et l'arrivée pour montrer la fin de la resolution DFS
         plateau[posX][posY] = 4
         plateau[0][0] = 4
@@ -367,7 +367,7 @@ class Labyrinthe:
             t2 = time.time()
             TempsDFS.append(t2 - t1)
             t3 = time.time()
-            self.resolutionDijkstra(False)
+            # self.resolutionDijkstra(False)
             t4= time.time()
             TempsDijkstra.append(t4 - t3)
             t5 = time.time()
@@ -417,9 +417,9 @@ class Labyrinthe:
 
             #On vérifie si il n'y a plus de possibilité
             if len(pile)==0: terminer=True
-
-            #self.draw_plateau(plateau)
-            #self.affichage.update()
+            if affichage:
+                self.draw_plateau(plateau)
+                self.affichage.update()
 
         nb_mur=0
         for largeur in range(len(plateau)):
@@ -433,8 +433,9 @@ class Labyrinthe:
             if plateau[x][y]==1:
                 plateau[x][y]=0
                 nbNotMur-=1
-            #self.draw_plateau(plateau)
-            #self.affichage.update()
+            if affichage:
+                self.draw_plateau(plateau)
+                self.affichage.update()
         teleport = 0
         while teleport < 2:
             x=random.randint(0,WIDTH-1)
